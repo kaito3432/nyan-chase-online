@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FFF4D8">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="にゃんチェイス">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" sizes="180x180" href="./assets/images/pwa/apple-touch-icon.png">
+<title>にゃんチェイス</title>
+<link rel="stylesheet" href="./style.css?v=2.0.online-beta1">
+</head>
+<body>
+<div class="app">
+  <header class="hero art-hero">
+    <button class="gear-btn" id="settingsBtn" type="button" aria-label="設定">⚙️</button>
+    <img class="game-logo" src="./assets/images/logo.png" alt="にゃんチェイス">
+    <p>いたずらネコ vs 柴犬警察！11ターン逃げ切れ！</p>
+  </header>
+
+  <section class="game-topbar">
+    <div class="top-pill turn-pill">
+      <span class="top-label">TURN</span>
+      <strong id="turnDisplay">0 / 11</strong>
+    </div>
+    <div class="top-pill phase-pill">
+      <span class="top-label">フェーズ</span>
+      <strong id="phaseDisplay">🐕 警察配置</strong>
+    </div>
+  </section>
+
+  <section class="guide">
+    <div class="main" id="guideDisplay">0ターン目：柴犬警察を配置しよう</div>
+  </section>
+
+  <section class="board-shell">
+    <div class="board-title">🏠 ダンボール街</div>
+    <div class="board" id="board"></div>
+  </section>
+<section class="tracks-summary" id="tracksSummary">
+    <span>🐾 発見した足跡</span>
+    <strong id="tracksFoundCount">0</strong>
+  </section>
+
+  <section class="route-reveal-panel" id="routeRevealPanel">
+    <div class="route-reveal-title">🐾 ネコはこう逃げていました！</div>
+    <div class="route-reveal-sub" id="routeRevealSub">スタート地点から最後までの軌跡</div>
+  </section>
+
+  <section class="dog-row" id="dogRow">
+    <button class="dog-card red" id="dogCard0"><span class="dog-name">🟥 あか柴</span>未配置</button>
+    <button class="dog-card blue" id="dogCard1"><span class="dog-name">🟦 あお柴</span>未配置</button>
+    <button class="dog-card cream" id="dogCard2"><span class="dog-name">🟨 しろ柴</span>未配置</button>
+  </section>
+
+  <div class="message" id="message">🐱 ネコのスタート地点を秘密に決めよう。</div>
+
+  <section class="phase-controls">
+    <button class="btn pink cat-only" id="catViewBtn">👀 ネコ位置を見る</button>
+    <button class="btn yellow dog-end-only" id="finishDogTurnBtn">✅ 柴犬ターン終了</button>
+  </section>
+</div>
+
+
+<div class="overlay show title-screen visual-update3" id="modeOverlay">
+  <div class="vu3-home">
+    <section class="vu3-brand">
+      <img class="vu3-logo" src="./assets/images/home_logo.png" alt="にゃんチェイス">
+      <img class="vu3-hero" src="./assets/images/home_hero.png" alt="ネコと柴犬警察">
+    </section>
+    <div class="vu3-sub">遊び方を選んでね</div>
+    <div class="vu3-modes">
+      <button class="vu3-mode vu3-vs" id="localModeBtn" type="button">
+        <div class="vu3-copy"><strong>対人戦</strong><span>同じスマホを交代しながら遊ぶ</span></div>
+        <img class="vu3-mode-art" src="./assets/images/home_vs.png" alt="">
+      </button>
+      <button class="vu3-mode vu3-cpu" id="cpuModeBtn" type="button">
+        <div class="vu3-copy"><strong>CPU対戦</strong><span>ネコ / 警察 どちらでも遊べる</span></div>
+        <img class="vu3-mode-art" src="./assets/images/home_cpu.png" alt="">
+      </button>
+      <button class="vu3-mode vu3-online online-beta-btn" id="onlineModeBtn" type="button">
+        <div class="vu3-copy"><strong>オンライン対戦</strong><span>合言葉コードで遊ぶ β</span></div>
+        <div class="online-beta-mark" aria-hidden="true">🌐</div>
+      </button>
+    </div>
+    <div class="vu3-bottom">
+      <button class="vu3-mini" id="howToBtn" type="button">
+        <svg class="vu3-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M8 14c10-3 18-2 24 4v34c-7-6-15-7-24-4z"></path>
+          <path d="M56 14c-10-3-18-2-24 4v34c7-6 15-7 24-4z"></path>
+        </svg>
+        <span>遊び方</span>
+      </button>
+      <button class="vu3-mini" id="soundQuickBtn" type="button">
+        <svg class="vu3-svg sound-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M10 25h12l14-11v36L22 39H10z"></path>
+          <path d="M43 23c5 5 5 13 0 18"></path>
+          <path d="M49 16c10 10 10 22 0 32"></path>
+        </svg>
+        <span>サウンド</span>
+      </button>
+      <button class="vu3-mini" id="titleSettingsBtn" type="button">
+        <svg class="vu3-svg gear-svg" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M27 6h10l2 8 7 4 8-2 5 9-6 6v8l6 6-5 9-8-2-7 4-2 8H27l-2-8-7-4-8 2-5-9 6-6v-8l-6-6 5-9 8 2 7-4z"></path>
+          <circle cx="32" cy="35" r="9"></circle>
+        </svg>
+        <span>設定</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="overlay online-overlay" id="onlineOverlay">
+  <div class="modal online-modal">
+    <button class="online-close-x" id="onlineCloseBtn" type="button" aria-label="閉じる">×</button>
+
+    <div class="online-title-icon">🌐</div>
+    <h2>オンライン対戦 β</h2>
+    <p class="online-lead">まずは合言葉コードで2人をつなぎます</p>
+
+    <div class="online-step" id="onlineCreatePanel">
+      <button class="btn pink online-create-btn" id="onlineCreateRoomBtn" type="button">
+        部屋を作る
+      </button>
+      <p class="online-help">6桁コードを相手に伝えてね</p>
+    </div>
+
+    <div class="online-step online-room-panel" id="onlineRoomPanel" hidden>
+      <div class="online-room-label">合言葉コード</div>
+      <div class="online-room-code" id="onlineRoomCode">------</div>
+      <button class="online-copy-btn" id="onlineCopyCodeBtn" type="button">コードをコピー</button>
+
+      <div class="online-wait-card" id="onlineWaitCard">
+        <span class="online-wait-dot"></span>
+        <div>
+          <strong id="onlineWaitTitle">相手を待っています…</strong>
+          <span id="onlineWaitText">もう1台のスマホでこのコードを入力してください</span>
+        </div>
+      </div>
+
+      <div class="online-ready-card" id="onlineReadyCard" hidden>
+        <strong>🐾 2人そろいました！</strong>
+        <span>次の段階でゲーム同期を開始します</span>
+      </div>
+
+      <button class="btn" id="onlineCancelRoomBtn" type="button">部屋を閉じる</button>
+    </div>
+
+    <div class="online-error" id="onlineError" hidden></div>
+    <p class="online-beta-note">β版：現在は「部屋作成・接続確認」まで</p>
+  </div>
+</div>
+
+<div class="overlay" id="cpuSideOverlay">
+  <div class="modal cpu-side-modal">
+    <div class="modal-icon">🤖</div>
+    <h2>どっちで遊ぶ？</h2>
+    <p>CPU対戦の役割を選んでね</p>
+
+    <div class="cpu-side-grid">
+      <button class="cpu-side-btn cat-side vu3-side-btn" id="playCatSideBtn" type="button">
+<img src="./assets/images/cpu_select_cat.png" alt="">
+<div class="vu3-side-copy"><strong>ネコで遊ぶ</strong><span>CPUは柴犬警察</span></div>
+</button>
+
+      <button class="cpu-side-btn dog-side vu3-side-btn" id="playPoliceSideBtn" type="button">
+<img src="./assets/images/cpu_select_dogs.png" alt="">
+<div class="vu3-side-copy"><strong>警察で遊ぶ</strong><span>CPUはネコ</span></div>
+</button>
+    </div>
+
+    <button class="btn" id="cpuSideBackBtn" type="button">← 戻る</button>
+  </div>
+</div>
+
+<div class="overlay" id="difficultyOverlay">
+  <div class="modal difficulty-modal">
+    <div class="modal-icon">🤖</div>
+    <h2>CPUの強さ</h2>
+    <p>どの強さで遊ぶ？</p>
+    <div class="difficulty-grid">
+      <button class="difficulty-btn easy" id="cpuEasyBtn" type="button">
+        <span class="difficulty-emoji">😊</span>
+        <span class="difficulty-name">やさしい</span>
+        <span class="difficulty-desc">読み違いもする、気軽な相手</span>
+      </button>
+      <button class="difficulty-btn normal" id="cpuNormalBtn" type="button">
+        <span class="difficulty-emoji">🙂</span>
+        <span class="difficulty-name">ふつう</span>
+        <span class="difficulty-desc">足跡を追ってバランスよく捜査</span>
+      </button>
+      <button class="difficulty-btn hard" id="cpuHardBtn" type="button">
+        <span class="difficulty-emoji">😈</span>
+        <span class="difficulty-name">つよい</span>
+        <span class="difficulty-desc">包囲・先回りまで狙う本気モード</span>
+      </button>
+    </div>
+    <button class="btn" id="difficultyBackBtn" type="button">← 戻る</button>
+  </div>
+</div>
+
+<div class="overlay" id="privacyOverlay">
+  <div class="modal">
+    <div class="modal-icon" id="privacyIcon">🐕</div>
+    <h2 id="privacyTitle">交代</h2>
+    <p id="privacyText"></p>
+    <button class="btn pink" id="privacyBtn">OK</button>
+  </div>
+</div>
+
+
+
+<div class="victory-cutin" id="victoryCutin" aria-hidden="true">
+  <div class="victory-cutin-backdrop"></div>
+  <div class="victory-cutin-card">
+    <div class="victory-cutin-flash"></div>
+    <img id="victoryCutinImage" src="" alt="">
+    <div class="victory-cutin-skip">タップで結果へ</div>
+  </div>
+</div>
+
+<div class="overlay" id="resultOverlay">
+  <div class="modal">
+    <div class="modal-icon" id="resultIcon">🎉</div>
+    <h2 id="resultTitle">ゲーム終了</h2>
+    <p id="resultText"></p>
+
+    <div class="result-route" id="resultRoute">
+      <div class="result-route-title">🐾 ネコはこう逃げていました！</div>
+      <div class="result-route-board" id="resultRouteBoard"></div>
+      <div class="result-route-note" id="resultRouteNote"></div>
+    </div>
+
+    <button class="btn pink" id="againBtn">🔄 もう一度遊ぶ</button>
+  </div>
+</div>
+
+
+<div class="overlay" id="settingsOverlay">
+  <div class="modal settings-modal">
+    <div class="modal-icon">⚙️</div>
+    <h2>設定</h2>
+    <div class="settings-list">
+      <button class="setting-row" id="sfxToggleBtn" type="button">
+        <span>🔊 効果音</span><strong id="sfxState">ON</strong>
+      </button>
+      <button class="setting-row" id="vibrationToggleBtn" type="button">
+        <span>📳 バイブ</span><strong id="vibrationState">ON</strong>
+      </button>
+      <button class="setting-row" id="bgmToggleBtn" type="button">
+        <span>🎵 BGM</span><strong id="bgmState">ON</strong>
+      </button>
+      <div class="volume-row">
+        <span>🔉 BGM音量</span>
+        <input id="bgmVolumeSlider" type="range" min="0" max="100" step="1" value="72" aria-label="BGM音量">
+        <strong id="bgmVolumeValue">72%</strong>
+      </div>
+    </div>
+    <div class="settings-actions">
+      <button class="btn yellow" id="restartFromSettingsBtn" type="button">🔄 最初からやり直す</button>
+      <button class="btn" id="backToTitleBtn" type="button">🏠 タイトルへ戻る</button>
+    </div>
+    <button class="btn pink" id="settingsCloseBtn" type="button">閉じる</button>
+  </div>
+</div>
+
+<div class="last-turn-banner" id="lastTurnBanner">🔥 LAST TURN 🔥</div>
+
+<div class="phase-cue" id="phaseCue">
+  <div class="phase-cue-icon" id="phaseCueIcon">🐱</div>
+  <div class="phase-cue-text" id="phaseCueText">ネコの番</div>
+</div>
+
+<div class="toast" id="toast">
+  <div class="toast-icon" id="toastIcon">🐾</div>
+  <div class="toast-title" id="toastTitle">痕跡発見！</div>
+  <div class="toast-text" id="toastText"></div>
+</div>
+
+<div class="motion-status" id="motionStatus"></div>
+<div class="confetti-layer" id="confettiLayer"></div>
+<script src="./engine.js?v=2.0.online-beta1"></script>
+<script src="./audio.js?v=2.0.online-beta1"></script>
+<script src="./animation.js?v=2.0.online-beta1"></script>
+<script src="./online.js?v=2.0.online-beta1"></script>
+<script src="./game.js?v=2.0.online-beta1"></script>
+
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js", { scope: "./" })
+      .catch(err => console.warn("Service Worker registration failed:", err));
+  });
+}
+</script>
+
+</body>
+</html>

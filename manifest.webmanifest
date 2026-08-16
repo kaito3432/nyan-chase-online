@@ -1,0 +1,32 @@
+{
+  "name": "にゃんチェイス",
+  "short_name": "にゃんチェイス",
+  "description": "いたずらネコになって、3匹の柴犬警察から11ターン逃げ切ろう！",
+  "lang": "ja",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFF8E6",
+  "theme_color": "#FFF4D8",
+  "icons": [
+    {
+      "src": "./assets/images/pwa/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/images/pwa/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "./assets/images/pwa/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

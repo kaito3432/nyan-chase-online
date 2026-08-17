@@ -584,6 +584,41 @@ return;
 
   return;
 }
+   if (payload.type === "catEscaped") {
+  if (senderRole !== "cat") return;
+
+  const route = Array.isArray(room.secretCat?.history)
+    ? room.secretCat.history
+        .map(step => ({
+          box: Number(step.box),
+          turn: Number(step.turn),
+        }))
+        .filter(step =>
+          Number.isInteger(step.box) &&
+          step.box >= 0 &&
+          step.box < 25 &&
+          Number.isInteger(step.turn)
+        )
+        .sort((a,b)=>a.turn-b.turn)
+    : [];
+
+  const policePlayer =
+    this.playerForRole(room, "police");
+
+  if (policePlayer) {
+    this.sendToRole(policePlayer, {
+      type: "game",
+      from: "server",
+      payload: {
+        type: "catEscaped",
+        turn: Number(payload.turn),
+        route,
+      },
+    });
+  }
+
+  return;
+}
 
   /*
    * ==========================================

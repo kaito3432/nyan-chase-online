@@ -44,6 +44,13 @@ await this.ctx.storage.put("room", {
   hostToken,
   guestToken: null,
   roles: null,
+
+  // 警察端末には送らない秘密情報
+  secretCat: {
+    pos: null,
+    history: [],
+    turn: 0,
+  },
 });
 
       return json({
@@ -229,46 +236,207 @@ async broadcastPresence() {
   }
 }
 
-  async webSocketMessage(ws, message) {
-    let data;
+  sendToRole(role, data) {
+  const message = JSON.stringify(data);
+
+  for (const socket of this.ctx.getWebSockets()) {
+    const info = socket.deserializeAttachment();
+
+    if (info?.player !== role) continue;
 
     try {
-      data = JSON.parse(message);
-    } catch (_) {
-      return;
-    }
-
-    const sender = ws.deserializeAttachment()?.player;
-
-    // 接続テスト用ping
-    if (data.type === "ping") {
-      ws.send(
-        JSON.stringify({
-          type: "pong",
-          player: sender,
-          time: Date.now(),
-        })
-      );
-      return;
-    }
-
-    // β版では相手へメッセージを中継する
-    if (data.type === "game") {
-      const outgoing = JSON.stringify({
-        type: "game",
-        from: sender,
-        payload: data.payload ?? null,
-      });
-
-      for (const socket of this.ctx.getWebSockets()) {
-        if (socket === ws) continue;
-
-        try {
-          socket.send(outgoing);
-        } catch (_) {}
-      }
-    }
+      socket.send(message);
+    } catch (_) {}
   }
+}
+
+ async webSocketMessage(ws, message) {
+  let data;
+
+  try {
+    data = JSON.parse(message);
+  } catch (_) {
+    return;
+  }
+
+  const sender = ws.deserializeAttachment()?.player;
+
+  if (!sender) return;
+
+  // 接続確認
+  if (data.type === "ping") {
+    ws.send(
+      JSON.stringify({
+        type: "pong",
+        player: sender,
+        time: Date.now(),
+      })
+    );
+
+    return;
+  }
+
+  if (data.type !== "game") {
+    return;
+  }
+
+  const payload = data.payload ?? {};
+  const room = await this.ctx.storage.get("room");
+
+  if (!room || !room.roles) {
+    return;
+  }
+
+  const senderRole = room.roles[sender];
+
+  /*
+   * ==========================================
+   * ネコ：初期位置
+   * ==========================================
+   *
+   * catPosはCloudflareだけが保存。
+   * 警察には位置番号を送らない。
+   */
+  if (payload.type === "catSetup") {
+    if (senderRole !== "cat") return;
+
+    const catPos = Number(payload.catPos);
+
+    if (
+      !Number.isInteger(catPos) ||
+      catPos < 0 ||
+      catPos >= 25
+    ) {
+      return;
+    }
+
+    room.secretCat = {
+      pos: catPos,
+      turn: 1,
+      history: [
+        {
+          box: catPos,
+          turn: 1,
+        },
+      ],
+    };
+
+    await this.ctx.storage.put("room", room);
+
+    const policePlayer =
+      this.playerForRole(room, "police");
+
+    if (policePlayer) {
+      this.sendToRole(policePlayer, {
+        type: "game",
+        from: "server",
+        payload: {
+          type: "catSetupDone",
+          turn: 1,
+        },
+      });
+    }
+
+    // ネコ本人へ保存完了通知
+    ws.send(
+      JSON.stringify({
+        type: "game",
+        from: "server",
+        payload: {
+          type: "catSetupAccepted",
+          turn: 1,
+        },
+      })
+    );
+
+    return;
+  }
+
+  /*
+   * ==========================================
+   * ネコ：通常移動
+   * ==========================================
+   *
+   * 移動先もCloudflareだけが保持。
+   */
+  if (payload.type === "catMove") {
+    if (senderRole !== "cat") return;
+
+    const catPos = Number(payload.catPos);
+    const turn = Number(payload.turn);
+
+    if (
+      !Number.isInteger(catPos) ||
+      catPos < 0 ||
+      catPos >= 25 ||
+      !Number.isInteger(turn) ||
+      turn < 1 ||
+      turn > 11
+    ) {
+      return;
+    }
+
+    if (!room.secretCat) {
+      room.secretCat = {
+        pos: null,
+        history: [],
+        turn: 0,
+      };
+    }
+
+    room.secretCat.pos = catPos;
+    room.secretCat.turn = turn;
+
+    if (!Array.isArray(room.secretCat.history)) {
+      room.secretCat.history = [];
+    }
+
+    room.secretCat.history.push({
+      box: catPos,
+      turn,
+    });
+
+    await this.ctx.storage.put("room", room);
+
+    const policePlayer =
+      this.playerForRole(room, "police");
+
+    if (policePlayer) {
+      this.sendToRole(policePlayer, {
+        type: "game",
+        from: "server",
+        payload: {
+          type: "catMoveDone",
+          turn,
+        },
+      });
+    }
+
+    return;
+  }
+
+  /*
+   * ==========================================
+   * その他のゲーム情報
+   * ==========================================
+   *
+   * dogSetup / dogMove / ready などは
+   * 今までどおり相手へ中継。
+   */
+  const outgoing = JSON.stringify({
+    type: "game",
+    from: sender,
+    payload,
+  });
+
+  for (const socket of this.ctx.getWebSockets()) {
+    if (socket === ws) continue;
+
+    try {
+      socket.send(outgoing);
+    } catch (_) {}
+  }
+}
 
   async webSocketClose(ws) {
     try {

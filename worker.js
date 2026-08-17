@@ -485,16 +485,18 @@ if (result === "track") {
 
   const catPlayer = this.playerForRole(room, "cat");
 
-  if (catPlayer) {
-    this.sendToRole(catPlayer, {
-      type: "game",
-      from: "server",
-      payload: {
-        type: "trackCount",
-        count: foundTrackCount,
-      },
-    });
-  }
+if (catPlayer) {
+  this.sendToRole(catPlayer, {
+    type: "game",
+    from: "server",
+    payload: {
+      type: "trackCount",
+      count: foundTrackCount,
+      box,
+      trackTurn,
+    },
+  });
+}
 }
      const route =
   result === "capture" && Array.isArray(secretCat.history)

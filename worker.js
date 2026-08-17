@@ -429,6 +429,60 @@ async broadcastPresence() {
     return;
   }
 
+   if (payload.type === "search") {
+  if (senderRole !== "police") return;
+
+  const box = Number(payload.box);
+  const dogIndex = Number(payload.dogIndex);
+
+  if (
+    !Number.isInteger(box) ||
+    box < 0 ||
+    box >= 25 ||
+    !Number.isInteger(dogIndex) ||
+    dogIndex < 0 ||
+    dogIndex >= 3
+  ) {
+    return;
+  }
+
+  const secretCat = room.secretCat;
+
+  if (!secretCat || secretCat.pos === null) {
+    return;
+  }
+
+  let result = "empty";
+  let trackTurn = null;
+
+  if (box === secretCat.pos) {
+    result = "capture";
+  } else if (Array.isArray(secretCat.history)) {
+    const found = secretCat.history.find(h => h.box === box);
+
+    if (found) {
+      result = "track";
+      trackTurn = found.turn;
+    }
+  }
+
+  ws.send(
+    JSON.stringify({
+      type: "game",
+      from: "server",
+      payload: {
+        type: "searchResult",
+        dogIndex,
+        box,
+        result,
+        trackTurn,
+      },
+    })
+  );
+
+  return;
+}
+
   /*
    * ==========================================
    * その他のゲーム情報

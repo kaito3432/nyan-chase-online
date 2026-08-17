@@ -52,6 +52,7 @@ await this.ctx.storage.put("room", {
     turn: 0,
   },
 });
+      publicFoundTracks: [],
 
       return json({
         ok: true,
@@ -465,6 +466,36 @@ async broadcastPresence() {
       trackTurn = found.turn;
     }
   }
+     
+let foundTrackCount = Array.isArray(room.publicFoundTracks)
+  ? room.publicFoundTracks.length
+  : 0;
+
+if (result === "track") {
+  if (!Array.isArray(room.publicFoundTracks)) {
+    room.publicFoundTracks = [];
+  }
+
+  if (!room.publicFoundTracks.includes(box)) {
+    room.publicFoundTracks.push(box);
+    await this.ctx.storage.put("room", room);
+  }
+
+  foundTrackCount = room.publicFoundTracks.length;
+
+  const catPlayer = this.playerForRole(room, "cat");
+
+  if (catPlayer) {
+    this.sendToRole(catPlayer, {
+      type: "game",
+      from: "server",
+      payload: {
+        type: "trackCount",
+        count: foundTrackCount,
+      },
+    });
+  }
+}
 
  // 警察側へ探索結果を返す
 ws.send(

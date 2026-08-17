@@ -39,11 +39,12 @@ export class GameRoom extends DurableObject {
 
       const hostToken = crypto.randomUUID();
 
-      await this.ctx.storage.put("room", {
-        createdAt: Date.now(),
-        hostToken,
-        guestToken: null,
-      });
+await this.ctx.storage.put("room", {
+  createdAt: Date.now(),
+  hostToken,
+  guestToken: null,
+  roles: null,
+});
 
       return json({
         ok: true,
@@ -161,22 +162,72 @@ export class GameRoom extends DurableObject {
     return [...players];
   }
 
-  async broadcastPresence() {
-    const players = this.connectedPlayers();
+async broadcastPresence() {
+  const players = this.connectedPlayers();
 
-    const message = JSON.stringify({
-      type: "presence",
-      players,
-      count: players.length,
-      ready: players.includes("host") && players.includes("guest"),
-    });
+  const ready =
+    players.includes("host") &&
+    players.includes("guest");
 
-    for (const socket of this.ctx.getWebSockets()) {
-      try {
-        socket.send(message);
-      } catch (_) {}
-    }
+  const message = JSON.stringify({
+    type: "presence",
+    players,
+    count: players.length,
+    ready,
+  });
+
+  for (const socket of this.ctx.getWebSockets()) {
+    try {
+      socket.send(message);
+    } catch (_) {}
   }
+
+  // 2人そろったら役割を決定・通知
+  if (ready) {
+    await this.assignRoles();
+  }
+}
+
+  async assignRoles() {
+  const room = await this.ctx.storage.get("room");
+
+  if (!room) return;
+
+  // まだ役割が決まっていなければ1度だけ抽選
+  if (!room.roles) {
+    const hostIsCat =
+      crypto.getRandomValues(new Uint32Array(1))[0] % 2 === 0;
+
+    room.roles = {
+      host: hostIsCat ? "cat" : "police",
+      guest: hostIsCat ? "police" : "cat",
+    };
+
+    await this.ctx.storage.put("room", room);
+  }
+
+  // 各プレイヤーへ自分の役割だけ通知
+  for (const socket of this.ctx.getWebSockets()) {
+    const info = socket.deserializeAttachment();
+    const player = info?.player;
+
+    if (!player) continue;
+
+    const role = room.roles[player];
+
+    try {
+      socket.send(
+        JSON.stringify({
+          type: "role",
+          player,
+          role,
+          opponentRole:
+            role === "cat" ? "police" : "cat",
+        })
+      );
+    } catch (_) {}
+  }
+}
 
   async webSocketMessage(ws, message) {
     let data;

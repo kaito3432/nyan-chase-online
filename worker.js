@@ -496,19 +496,35 @@ if (result === "track") {
     });
   }
 }
+     const route =
+  result === "capture" && Array.isArray(secretCat.history)
+    ? secretCat.history
+        .map(step => ({
+          box: Number(step.box),
+          turn: Number(step.turn),
+        }))
+        .filter(step =>
+          Number.isInteger(step.box) &&
+          step.box >= 0 &&
+          step.box < 25 &&
+          Number.isInteger(step.turn)
+        )
+        .sort((a,b)=>a.turn-b.turn)
+    : null;
 
  // 警察側へ探索結果を返す
 ws.send(
   JSON.stringify({
     type: "game",
     from: "server",
-    payload: {
-      type: "searchResult",
-      dogIndex,
-      box,
-      result,
-      trackTurn,
-    },
+payload: {
+  type: "searchResult",
+  dogIndex,
+  box,
+  result,
+  trackTurn,
+  route,
+},
   })
 );
 

@@ -466,21 +466,39 @@ async broadcastPresence() {
     }
   }
 
-  ws.send(
-    JSON.stringify({
+ // 警察側へ探索結果を返す
+ws.send(
+  JSON.stringify({
+    type: "game",
+    from: "server",
+    payload: {
+      type: "searchResult",
+      dogIndex,
+      box,
+      result,
+      trackTurn,
+    },
+  })
+);
+
+// ネコを捕獲した場合は、ネコ側にもゲーム終了を通知
+if (result === "capture") {
+  const catPlayer = this.playerForRole(room, "cat");
+
+  if (catPlayer) {
+    this.sendToRole(catPlayer, {
       type: "game",
       from: "server",
       payload: {
-        type: "searchResult",
+        type: "captured",
         dogIndex,
         box,
-        result,
-        trackTurn,
       },
-    })
-  );
+    });
+  }
+}
 
-  return;
+return;
 }
 
   /*

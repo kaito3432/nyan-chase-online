@@ -250,6 +250,20 @@ async broadcastPresence() {
   }
 }
 
+  playerForRole(room, wantedRole) {
+  if (!room?.roles) return null;
+
+  if (room.roles.host === wantedRole) {
+    return "host";
+  }
+
+  if (room.roles.guest === wantedRole) {
+    return "guest";
+  }
+
+  return null;
+}
+
  async webSocketMessage(ws, message) {
   let data;
 

@@ -45,14 +45,14 @@ await this.ctx.storage.put("room", {
   guestToken: null,
   roles: null,
 
-  // 警察端末には送らない秘密情報
   secretCat: {
     pos: null,
     history: [],
     turn: 0,
   },
+
+  publicFoundTracks: [],
 });
-      publicFoundTracks: [],
 
       return json({
         ok: true,

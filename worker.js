@@ -643,14 +643,32 @@ return;
   }
 }
 
-  async webSocketClose(ws) {
-    try {
-      ws.close(1000, "Closed");
-    } catch (_) {}
+async webSocketClose(ws) {
+  const disconnectedPlayer =
+    ws.deserializeAttachment()?.player;
 
-    await this.broadcastPresence();
+  // 残っている相手へ切断を通知
+  if(disconnectedPlayer){
+    const outgoing = JSON.stringify({
+      type: "peerDisconnected",
+      player: disconnectedPlayer,
+    });
+
+    for(const socket of this.ctx.getWebSockets()){
+      if(socket === ws) continue;
+
+      try{
+        socket.send(outgoing);
+      }catch(_){}
+    }
   }
 
+  try{
+    ws.close(1000, "Closed");
+  }catch(_){}
+
+  await this.broadcastPresence();
+}
   async webSocketError(ws) {
     try {
       ws.close(1011, "WebSocket error");

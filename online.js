@@ -49,8 +49,15 @@ window.NyanOnline = (() => {
     return u.toString();
   }
 
-  function connect({ onPresence, onGame, onOpen, onClose, onError } = {}) {
-    disconnect();
+function connect({
+  onPresence,
+  onGame,
+  onOpen,
+  onClose,
+  onError,
+  onPeerDisconnected
+} = {}) {
+   disconnect();
 
     if (!roomCode || !token) {
       throw new Error("room_not_created");
@@ -65,20 +72,28 @@ window.NyanOnline = (() => {
       } catch (_) {}
     });
 
-    socket.addEventListener("message", (event) => {
-      let data;
-      try {
-        data = JSON.parse(event.data);
-      } catch (_) {
-        return;
-      }
+socket.addEventListener("message", (event) => {
+  let data;
 
-      if (data.type === "presence" && onPresence) {
-        onPresence(data);
-      } else if (data.type === "game" && onGame) {
-        onGame(data);
-      }
-    });
+  try {
+    data = JSON.parse(event.data);
+  } catch (_) {
+    return;
+  }
+
+  if (data.type === "presence" && onPresence) {
+    onPresence(data);
+
+  } else if (data.type === "game" && onGame) {
+    onGame(data);
+
+  } else if (
+    data.type === "peerDisconnected" &&
+    onPeerDisconnected
+  ) {
+    onPeerDisconnected(data);
+  }
+});
 
     socket.addEventListener("close", (event) => {
       if (onClose) onClose(event);

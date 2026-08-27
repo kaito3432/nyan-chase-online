@@ -402,6 +402,15 @@ const noTrackBox = Number(payload.noTrackBox);
 const fakePawBox =
   Number(payload.fakePawBox);
 
+    console.log("=== FAKE PAW RECEIVE ===", {
+  fakePawUsed,
+  fakePawBox,
+  rawFakePawUsed: payload.fakePawUsed,
+  rawFakePawBox: payload.fakePawBox,
+  catPos,
+  turn
+});
+
     if (
       !Number.isInteger(catPos) ||
       catPos < 0 ||
@@ -455,6 +464,11 @@ if (
     turn
   });
 }
+
+    console.log(
+  "=== FAKE TRACKS SAVED ===",
+  room.secretCat.fakeTracks
+);
     room.secretCat.pos = catPos;
     room.secretCat.turn = turn;
 
@@ -552,6 +566,12 @@ if (box === secretCat.pos) {
     Array.isArray(secretCat.fakeTracks)
       ? secretCat.fakeTracks.find(h => h.box === box)
       : null;
+
+  console.log("=== FAKE PAW SEARCH ===", {
+  searchedBox: box,
+  fakeTracks: secretCat.fakeTracks,
+  fakeTrack
+});
 
   // 本物でも偽物でも警察には同じ「足跡」として返す
   const foundTrack =

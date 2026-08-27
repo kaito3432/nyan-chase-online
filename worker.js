@@ -582,7 +582,6 @@ if (box === secretCat.pos) {
     trackTurn = foundTrack.turn;
   }
 }
-}
      
 let foundTrackCount = Array.isArray(room.publicFoundTracks)
   ? room.publicFoundTracks.length

@@ -490,19 +490,32 @@ if (catPlayer) {
     return;
   }
 
-  let result = "empty";
-  let trackTurn = null;
+let result = "empty";
+let trackTurn = null;
 
-  if (box === secretCat.pos) {
-    result = "capture";
-  } else if (Array.isArray(secretCat.history)) {
-    const found = secretCat.history.find(h => h.box === box);
+if (box === secretCat.pos) {
+
+  // 現在ネコがいる箱なら、忍び足に関係なく捕獲
+  result = "capture";
+
+} else if (Array.isArray(secretCat.history)) {
+
+  // 忍び足によって足跡を残さなかった箱か
+  const noTrack =
+    Array.isArray(secretCat.noTrackBoxes) &&
+    secretCat.noTrackBoxes.includes(box);
+
+  if (!noTrack) {
+
+    const found =
+      secretCat.history.find(h => h.box === box);
 
     if (found) {
       result = "track";
       trackTurn = found.turn;
     }
   }
+}
      
 let foundTrackCount = Array.isArray(room.publicFoundTracks)
   ? room.publicFoundTracks.length

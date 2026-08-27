@@ -400,9 +400,7 @@ const noTrackBox = Number(payload.noTrackBox);
   payload.fakePawUsed === true;
 
 const fakePawBox =
-  Number.isInteger(payload.fakePawBox)
-    ? payload.fakePawBox
-    : null;
+  Number(payload.fakePawBox);
 
     if (
       !Number.isInteger(catPos) ||

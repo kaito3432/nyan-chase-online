@@ -52,6 +52,9 @@ secretCat: {
 
   // 忍び足で足跡を残さない箱
   noTrackBoxes: [],
+
+  // フェイク肉球
+  fakeTracks: [],
 },
 
   publicFoundTracks: [],
@@ -341,6 +344,9 @@ room.secretCat = {
 
   // 忍び足で消した足跡
   noTrackBoxes: [],
+
+  // フェイク肉球
+  fakeTracks: [],
 };
 
     await this.ctx.storage.put("room", room);

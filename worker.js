@@ -390,6 +390,14 @@ room.secretCat = {
     const sneakUsed = payload.sneakUsed === true;
 const noTrackBox = Number(payload.noTrackBox);
 
+    const fakePawUsed =
+  payload.fakePawUsed === true;
+
+const fakePawBox =
+  Number.isInteger(payload.fakePawBox)
+    ? payload.fakePawBox
+    : null;
+
     if (
       !Number.isInteger(catPos) ||
       catPos < 0 ||
@@ -407,6 +415,7 @@ if (!room.secretCat) {
     history: [],
     turn: 0,
     noTrackBoxes: [],
+    fakeTracks: [],
   };
 }
 
@@ -422,6 +431,25 @@ if (
   !room.secretCat.noTrackBoxes.includes(noTrackBox)
 ) {
   room.secretCat.noTrackBoxes.push(noTrackBox);
+}
+
+    // ==============================
+// フェイク肉球を記録
+// ==============================
+if (!Array.isArray(room.secretCat.fakeTracks)) {
+  room.secretCat.fakeTracks = [];
+}
+
+if (
+  fakePawUsed &&
+  Number.isInteger(fakePawBox) &&
+  fakePawBox >= 0 &&
+  fakePawBox < 25
+) {
+  room.secretCat.fakeTracks.push({
+    box: fakePawBox,
+    turn
+  });
 }
     room.secretCat.pos = catPos;
     room.secretCat.turn = turn;
@@ -495,26 +523,41 @@ let trackTurn = null;
 
 if (box === secretCat.pos) {
 
-  // 現在ネコがいる箱なら、忍び足に関係なく捕獲
+  // 現在ネコがいる箱なら捕獲
   result = "capture";
 
-} else if (Array.isArray(secretCat.history)) {
+} else {
 
-  // 忍び足によって足跡を残さなかった箱か
+  // =========================
+  // 本物の足跡
+  // =========================
   const noTrack =
     Array.isArray(secretCat.noTrackBoxes) &&
     secretCat.noTrackBoxes.includes(box);
 
-  if (!noTrack) {
+  const realTrack =
+    !noTrack &&
+    Array.isArray(secretCat.history)
+      ? secretCat.history.find(h => h.box === box)
+      : null;
 
-    const found =
-      secretCat.history.find(h => h.box === box);
+  // =========================
+  // フェイク肉球
+  // =========================
+  const fakeTrack =
+    Array.isArray(secretCat.fakeTracks)
+      ? secretCat.fakeTracks.find(h => h.box === box)
+      : null;
 
-    if (found) {
-      result = "track";
-      trackTurn = found.turn;
-    }
+  // 本物でも偽物でも警察には同じ「足跡」として返す
+  const foundTrack =
+    realTrack || fakeTrack;
+
+  if (foundTrack) {
+    result = "track";
+    trackTurn = foundTrack.turn;
   }
+}
 }
      
 let foundTrackCount = Array.isArray(room.publicFoundTracks)

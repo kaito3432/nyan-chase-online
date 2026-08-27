@@ -519,6 +519,23 @@ if (
     return;
   }
 
+     // =====================================
+// ネコ側へ遠吠え発動カットイン通知
+// =====================================
+const catPlayer =
+  this.playerForRole(room, "cat");
+
+if (catPlayer) {
+  this.sendToRole(catPlayer, {
+    type: "game",
+    from: "server",
+    payload: {
+      type: "policeSkillUsed",
+      skill: "howl"
+    }
+  });
+}
+
   // 6×6交差点 → 周囲の5×5箱を算出
   const r = Math.floor(node / 6);
   const c = node % 6;

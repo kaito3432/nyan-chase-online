@@ -500,6 +500,64 @@ if (
     return;
   }
 
+   if (payload.type === "howl") {
+  if (senderRole !== "police") return;
+
+  const node = Number(payload.node);
+
+  if (
+    !Number.isInteger(node) ||
+    node < 0 ||
+    node >= 36
+  ) {
+    return;
+  }
+
+  const secretCat = room.secretCat;
+
+  if (!secretCat || secretCat.pos === null) {
+    return;
+  }
+
+  // 6×6交差点 → 周囲の5×5箱を算出
+  const r = Math.floor(node / 6);
+  const c = node % 6;
+
+  const boxes = [];
+
+  if (r > 0 && c > 0) {
+    boxes.push((r - 1) * 5 + (c - 1));
+  }
+
+  if (r > 0 && c < 5) {
+    boxes.push((r - 1) * 5 + c);
+  }
+
+  if (r < 5 && c > 0) {
+    boxes.push(r * 5 + (c - 1));
+  }
+
+  if (r < 5 && c < 5) {
+    boxes.push(r * 5 + c);
+  }
+
+  const catInside =
+    boxes.includes(secretCat.pos);
+
+  ws.send(
+    JSON.stringify({
+      type: "game",
+      from: "server",
+      payload: {
+        type: "howlResult",
+        inside: catInside
+      }
+    })
+  );
+
+  return;
+}
+
    if (payload.type === "search") {
   if (senderRole !== "police") return;
 

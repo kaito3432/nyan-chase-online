@@ -45,11 +45,14 @@ await this.ctx.storage.put("room", {
   guestToken: null,
   roles: null,
 
-  secretCat: {
-    pos: null,
-    history: [],
-    turn: 0,
-  },
+secretCat: {
+  pos: null,
+  history: [],
+  turn: 0,
+
+  // 忍び足で足跡を残さない箱
+  noTrackBoxes: [],
+},
 
   publicFoundTracks: [],
 });
@@ -325,16 +328,20 @@ async broadcastPresence() {
       return;
     }
 
-    room.secretCat = {
-      pos: catPos,
+room.secretCat = {
+  pos: catPos,
+  turn: 1,
+
+  history: [
+    {
+      box: catPos,
       turn: 1,
-      history: [
-        {
-          box: catPos,
-          turn: 1,
-        },
-      ],
-    };
+    },
+  ],
+
+  // 忍び足で消した足跡
+  noTrackBoxes: [],
+};
 
     await this.ctx.storage.put("room", room);
 
@@ -380,6 +387,9 @@ async broadcastPresence() {
     const catPos = Number(payload.catPos);
     const turn = Number(payload.turn);
 
+    const sneakUsed = payload.sneakUsed === true;
+const noTrackBox = Number(payload.noTrackBox);
+
     if (
       !Number.isInteger(catPos) ||
       catPos < 0 ||
@@ -391,14 +401,28 @@ async broadcastPresence() {
       return;
     }
 
-    if (!room.secretCat) {
-      room.secretCat = {
-        pos: null,
-        history: [],
-        turn: 0,
-      };
-    }
+if (!room.secretCat) {
+  room.secretCat = {
+    pos: null,
+    history: [],
+    turn: 0,
+    noTrackBoxes: [],
+  };
+}
 
+    if (!Array.isArray(room.secretCat.noTrackBoxes)) {
+  room.secretCat.noTrackBoxes = [];
+}
+
+if (
+  sneakUsed &&
+  Number.isInteger(noTrackBox) &&
+  noTrackBox >= 0 &&
+  noTrackBox < 25 &&
+  !room.secretCat.noTrackBoxes.includes(noTrackBox)
+) {
+  room.secretCat.noTrackBoxes.push(noTrackBox);
+}
     room.secretCat.pos = catPos;
     room.secretCat.turn = turn;
 

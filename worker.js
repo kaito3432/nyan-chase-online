@@ -732,10 +732,11 @@ if (payload.type === "doubleSearch") {
     this.sendToRole(catPlayer, {
       type: "game",
       from: "server",
-      payload: {
-        type: "doubleSearchResult",
-        results
-      }
+payload: {
+  type: "doubleSearchResult",
+  results,
+  route
+}
     });
   }
 

@@ -709,17 +709,39 @@ if (payload.type === "doubleSearch") {
           .sort((a,b)=>a.turn-b.turn)
       : null;
 
+  // =====================================
+// 一斉捜索捕獲時のネコ特殊スキル答え合わせ
+// =====================================
+const routeSkills =
+  capturedResult
+    ? {
+        sneakBoxes:
+          Array.isArray(secretCat.noTrackBoxes)
+            ? secretCat.noTrackBoxes.map(Number)
+            : [],
+
+        fakeTracks:
+          Array.isArray(secretCat.fakeTracks)
+            ? secretCat.fakeTracks.map(step => ({
+                box: Number(step.box),
+                turn: Number(step.turn)
+              }))
+            : []
+      }
+    : null;
+
   // ---------------------------------
   // 警察側へ2箱分の結果
   // ---------------------------------
   ws.send(JSON.stringify({
     type: "game",
     from: "server",
-    payload: {
-      type: "doubleSearchResult",
-      results,
-      route
-    }
+payload: {
+  type: "doubleSearchResult",
+  results,
+  route,
+  routeSkills
+}
   }));
 
   // ---------------------------------
@@ -735,7 +757,8 @@ if (payload.type === "doubleSearch") {
 payload: {
   type: "doubleSearchResult",
   results,
-  route
+  route,
+  routeSkills
 }
     });
   }

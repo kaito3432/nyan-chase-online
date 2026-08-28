@@ -973,6 +973,24 @@ return;
         .sort((a,b)=>a.turn-b.turn)
     : [];
 
+     // =====================================
+// 行き止まり時のネコ特殊スキル答え合わせ
+// =====================================
+const routeSkills = {
+  sneakBoxes:
+    Array.isArray(room.secretCat?.noTrackBoxes)
+      ? room.secretCat.noTrackBoxes.map(Number)
+      : [],
+
+  fakeTracks:
+    Array.isArray(room.secretCat?.fakeTracks)
+      ? room.secretCat.fakeTracks.map(step => ({
+          box: Number(step.box),
+          turn: Number(step.turn)
+        }))
+      : []
+};
+
   const policePlayer =
     this.playerForRole(room, "police");
 
@@ -980,11 +998,12 @@ return;
     this.sendToRole(policePlayer, {
       type: "game",
       from: "server",
-      payload: {
-        type: "catNoEscape",
-        turn: Number(payload.turn),
-        route,
-      },
+payload: {
+  type: "catNoEscape",
+  turn: Number(payload.turn),
+  route,
+  routeSkills,
+},
     });
   }
 
@@ -1008,6 +1027,24 @@ return;
         .sort((a,b)=>a.turn-b.turn)
     : [];
 
+     // =====================================
+// 逃げ切り時のネコ特殊スキル答え合わせ
+// =====================================
+const routeSkills = {
+  sneakBoxes:
+    Array.isArray(room.secretCat?.noTrackBoxes)
+      ? room.secretCat.noTrackBoxes.map(Number)
+      : [],
+
+  fakeTracks:
+    Array.isArray(room.secretCat?.fakeTracks)
+      ? room.secretCat.fakeTracks.map(step => ({
+          box: Number(step.box),
+          turn: Number(step.turn)
+        }))
+      : []
+};
+
   const policePlayer =
     this.playerForRole(room, "police");
 
@@ -1015,11 +1052,12 @@ return;
     this.sendToRole(policePlayer, {
       type: "game",
       from: "server",
-      payload: {
-        type: "catEscaped",
-        turn: Number(payload.turn),
-        route,
-      },
+payload: {
+  type: "catEscaped",
+  turn: Number(payload.turn),
+  route,
+  routeSkills,
+},
     });
   }
 

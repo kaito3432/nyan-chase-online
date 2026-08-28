@@ -562,18 +562,23 @@ for (const socket of this.ctx.getWebSockets()) {
   const catInside =
     boxes.includes(secretCat.pos);
 
-  ws.send(
-    JSON.stringify({
-      type: "game",
-      from: "server",
-      payload: {
-        type: "howlResult",
-        inside: catInside
-      }
-    })
-  );
+const howlResultMessage = JSON.stringify({
+  type:"game",
+  from:"server",
+  payload:{
+    type:"howlResult",
+    inside:catInside
+  }
+});
 
-  return;
+// 警察・ネコ両方へ遠吠え結果を通知
+for(const socket of this.ctx.getWebSockets()){
+  try{
+    socket.send(howlResultMessage);
+  }catch(_){}
+}
+
+return;
 }
 
    if (payload.type === "search") {

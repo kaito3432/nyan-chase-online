@@ -519,21 +519,22 @@ if (
     return;
   }
 
-     // =====================================
-// ネコ側へ遠吠え発動カットイン通知
-// =====================================
-const catPlayer =
-  this.playerForRole(room, "cat");
 
-if (catPlayer) {
-  this.sendToRole(catPlayer, {
-    type: "game",
-    from: "server",
-    payload: {
-      type: "policeSkillUsed",
-      skill: "howl"
-    }
-  });
+// =====================================
+// 遠吠え開始を両プレイヤーへ通知
+// =====================================
+const howlStartedMessage = JSON.stringify({
+  type: "game",
+  from: "server",
+  payload: {
+    type: "howlStarted"
+  }
+});
+
+for (const socket of this.ctx.getWebSockets()) {
+  try {
+    socket.send(howlStartedMessage);
+  } catch (_) {}
 }
 
   // 6×6交差点 → 周囲の5×5箱を算出

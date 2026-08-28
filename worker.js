@@ -581,6 +581,167 @@ for(const socket of this.ctx.getWebSockets()){
 return;
 }
 
+   // =====================================
+// しろ柴・一斉捜索
+// =====================================
+if (payload.type === "doubleSearch") {
+  if (senderRole !== "police") return;
+
+  const targets = Array.isArray(payload.targets)
+    ? payload.targets.map(Number)
+    : [];
+
+  if (
+    targets.length !== 2 ||
+    !targets.every(box =>
+      Number.isInteger(box) &&
+      box >= 0 &&
+      box < 25
+    )
+  ) {
+    return;
+  }
+
+  const secretCat = room.secretCat;
+
+  if (!secretCat || secretCat.pos === null) {
+    return;
+  }
+
+  // ---------------------------------
+  // 両プレイヤーへ一斉捜索開始を通知
+  // ---------------------------------
+  const startedMessage = JSON.stringify({
+    type: "game",
+    from: "server",
+    payload: {
+      type: "doubleSearchStarted",
+      targets
+    }
+  });
+
+  for (const socket of this.ctx.getWebSockets()) {
+    try {
+      socket.send(startedMessage);
+    } catch (_) {}
+  }
+
+  // ---------------------------------
+  // 2箱を判定
+  // ---------------------------------
+  const results = [];
+
+  for (const box of targets) {
+
+    let result = "empty";
+    let trackTurn = null;
+
+    // 現在地なら捕獲
+    if (box === secretCat.pos) {
+      result = "capture";
+    } else {
+
+      // 忍び足
+      const noTrack =
+        Array.isArray(secretCat.noTrackBoxes) &&
+        secretCat.noTrackBoxes.includes(box);
+
+      // 本物の足跡
+      const realTrack =
+        !noTrack &&
+        Array.isArray(secretCat.history)
+          ? secretCat.history.find(h => h.box === box)
+          : null;
+
+      // フェイク肉球
+      const fakeTrack =
+        Array.isArray(secretCat.fakeTracks)
+          ? secretCat.fakeTracks.find(h => h.box === box)
+          : null;
+
+      const foundTrack =
+        realTrack || fakeTrack;
+
+      if (foundTrack) {
+        result = "track";
+        trackTurn = foundTrack.turn;
+      }
+    }
+
+    results.push({
+      box,
+      result,
+      trackTurn
+    });
+
+    // 足跡なら公開済みに追加
+    if (result === "track") {
+      if (!Array.isArray(room.publicFoundTracks)) {
+        room.publicFoundTracks = [];
+      }
+
+      if (!room.publicFoundTracks.includes(box)) {
+        room.publicFoundTracks.push(box);
+      }
+    }
+  }
+
+  await this.ctx.storage.put("room", room);
+
+  // 捕獲された箱
+  const capturedResult =
+    results.find(r => r.result === "capture");
+
+  // 捕獲時の移動履歴
+  const route =
+    capturedResult && Array.isArray(secretCat.history)
+      ? secretCat.history
+          .map(step => ({
+            box: Number(step.box),
+            turn: Number(step.turn)
+          }))
+          .filter(step =>
+            Number.isInteger(step.box) &&
+            step.box >= 0 &&
+            step.box < 25 &&
+            Number.isInteger(step.turn)
+          )
+          .sort((a,b)=>a.turn-b.turn)
+      : null;
+
+  // ---------------------------------
+  // 警察側へ2箱分の結果
+  // ---------------------------------
+  ws.send(JSON.stringify({
+    type: "game",
+    from: "server",
+    payload: {
+      type: "doubleSearchResult",
+      results,
+      route
+    }
+  }));
+
+  // ---------------------------------
+  // ネコ側にも一斉捜索結果を通知
+  // ---------------------------------
+  const catPlayer =
+    this.playerForRole(room, "cat");
+
+  if (catPlayer) {
+    this.sendToRole(catPlayer, {
+      type: "game",
+      from: "server",
+      payload: {
+        type: "doubleSearchResult",
+        results
+      }
+    });
+  }
+
+  return;
+}
+
    if (payload.type === "search") {
   if (senderRole !== "police") return;
 

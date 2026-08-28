@@ -873,6 +873,29 @@ payload: {
         .sort((a,b)=>a.turn-b.turn)
     : null;
 
+     // =====================================
+// ゲーム終了時のネコ特殊スキル答え合わせ
+// =====================================
+const routeSkills =
+  result === "capture"
+    ? {
+        // 忍び足で足跡を消した箱
+        sneakBoxes:
+          Array.isArray(secretCat.noTrackBoxes)
+            ? secretCat.noTrackBoxes.map(Number)
+            : [],
+
+        // フェイク肉球を置いた箱
+        fakeTracks:
+          Array.isArray(secretCat.fakeTracks)
+            ? secretCat.fakeTracks.map(step => ({
+                box: Number(step.box),
+                turn: Number(step.turn)
+              }))
+            : []
+      }
+    : null;
+
  // 警察側へ探索結果を返す
 ws.send(
   JSON.stringify({
@@ -885,6 +908,7 @@ payload: {
   result,
   trackTurn,
   route,
+  routeSkills,
 },
   })
 );
